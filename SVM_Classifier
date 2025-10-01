@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+
+file_path = '/kaggle/input/breast-cancer-wisconsin-data/data.csv'
+
+df = pd.read_csv(file_path)
+
+df = df.drop(['id', 'Unnamed: 32'], axis=1)
+
+X = df.drop('diagnosis', axis=1)
+y_raw = df['diagnosis']
+
+label_encoder = LabelEncoder()
+y = label_encoder.fit_transform(y_raw)
+target_names = label_encoder.classes_
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+svm_classifier = SVC(kernel='rbf', random_state=42)
+svm_classifier.fit(X_train, y_train)
+
+y_pred = svm_classifier.predict(X_test)
+
+print("Classification Report:")
+print(classification_report(y_test, y_pred, target_names=['Benign (0)', 'Malignant (1)']))
+
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+            xticklabels=['Benign', 'Malignant'],
+            yticklabels=['Benign', 'Malignant'])
+plt.title('SVM Classification: Confusion Matrix\nAccuracy: {:.2f}%'.format(svm_classifier.score(X_test, y_test) * 100), fontsize=14)
+plt.ylabel('Actual Label', fontsize=12)
+plt.xlabel('Predicted Label', fontsize=12)
+plt.show()
